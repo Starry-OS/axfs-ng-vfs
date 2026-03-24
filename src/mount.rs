@@ -14,9 +14,9 @@ use hashbrown::HashMap;
 use inherit_methods_macro::inherit_methods;
 
 use crate::{
+    path::{PathBuf, DOT, DOTDOT},
     DirEntry, DirEntrySink, Filesystem, FilesystemOps, Metadata, MetadataUpdate, Mutex, MutexGuard,
     NodeFlags, NodePermission, NodeType, OpenOptions, ReferenceKey, TypeMap, VfsError, VfsResult,
-    path::{DOT, DOTDOT, PathBuf},
 };
 
 #[derive(Debug)]
@@ -236,7 +236,8 @@ impl Location {
         if !Arc::ptr_eq(&self.mountpoint, &dst_dir.mountpoint) {
             return Err(VfsError::CrossesDevices);
         }
-        if !self.ptr_eq(dst_dir) && self.entry.is_ancestor_of(&dst_dir.entry)? {
+        let src_entry = self.entry.as_dir()?.lookup(src_name)?;
+        if src_entry.is_ancestor_of(&dst_dir.entry)? {
             return Err(VfsError::InvalidInput);
         }
         self.entry
